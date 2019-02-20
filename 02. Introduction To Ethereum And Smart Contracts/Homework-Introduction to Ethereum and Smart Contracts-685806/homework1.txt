@@ -1,0 +1,66 @@
+pragma solidity >=0.4.22 <0.6.0;
+
+contract Fibonacci {
+    int n1 = 0;
+    int n2 = 1;
+    int n3;
+    int i;
+    
+    function nullify() private {
+        n1 = 0;
+        n2 = 1;
+    }
+    
+    //Non recursive solution
+    /*
+    *  This solution uses more gas (over 200_000)
+    *  and takes more time to execute
+    *  The gas requirement is too large
+    */
+    function fibonacci1(int res) public returns (int) {
+        for (i = 2; i < res; i++) {
+            n3 = n1 + n2;
+            n1 = n2;
+            n2 = n3;
+        }
+        
+        nullify();
+        
+        return n3;
+    }
+    
+     //Recursive solution
+    /*
+    *  This solution uses a bit less gas (around 160_000)
+    *  and takes more a bit less time to execute
+    *  The gas requirement is too large
+    */
+    function fibonacci2(int res) public returns(int) {
+        fibonacci2rec(res-2);
+        
+        nullify();
+        
+        return n3;
+    }
+    
+    function fibonacci2rec(int res) private {
+        if (res > 0) {
+            n3 = n1 + n2;
+            n1 = n2; 
+            n2 = n3;
+            
+            fibonacci2rec(res-1);
+        }
+    } 
+}
+
+
+contract Random {
+    
+    /*
+    * Result of random() is not constant 
+    */
+    function random() public returns(uint) {
+        return block.number + block.gaslimit + block.timestamp;
+    }
+}

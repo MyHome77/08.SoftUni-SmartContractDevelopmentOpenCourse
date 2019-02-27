@@ -1,0 +1,97 @@
+pragma solidity ^0.5.1;
+
+
+ @title Service Market Place - users are allowed to order service per 1 minute.
+  Owner is allowed to withdraw maximum 5 ethers per 1 one hour
+  By A.M.
+ 
+contract ServiceMarketPlace {
+    
+    ---------------------
+      State
+     ---------------------
+    
+    address public owner;
+    uint256 public purchasedTime;
+    uint256 public totalAmount;
+    uint256 public timeToNextWithdraw;
+    uint256 public amountOfEthers;
+    
+    ---------------------
+      Events
+     ---------------------
+    
+    
+    event ServiceBought(address customer, uint256 price, uint256 change);
+    event Withdraw(address owner, uint256 withdrawed, uint256 lifeToWithdraw);
+    
+    ---------------------
+     Initial state
+     ---------------------
+    
+    constructor() public {
+        owner = msg.sender;
+    }
+    
+    ---------------------
+      Modifiers
+     ---------------------
+    
+    modifier onlyIfTwoMinutesArePast {
+         require(purchasedTime + 2 minutes  now  purchasedTime == 0 ,'Please you need to wait 2 minutes to purchase service.');
+        _;
+    }
+    
+    modifier onlyIfOneHourPast {
+         require(timeToNextWithdraw + 1 hours  now, 'Please wait 1 hour till next withdraw');
+        _;
+    }
+    
+    modifier onlyIfOwner {
+        require(msg.sender == owner, 'Only owner can withdraw');
+        _;
+    }
+    
+    ---------------------
+      Functions
+     ---------------------
+    
+    
+      @dev Allow users to purchase serive, validate input value should be at least 1 ether
+      @dev if is more it will return change. Every user can purchase service per 2 minutes.
+     
+    function purchaseService()
+        public
+        payable {
+            require(msg.value = 1 ether, 'You must provide at least 1 ether to use service');
+            purchasedTime = now;
+            totalAmount++;
+            uint256 sendedMoney = msg.value;
+            uint256 change;
+            if(sendedMoney  1 ether) {
+                change = sendedMoney - 1 ether;
+                msg.sender.transfer(change);
+            }
+
+            emit ServiceBought(msg.sender, sendedMoney, change);
+        }
+       
+    
+      @dev Allow owner to withdraw some amount of ethers. Minimum is 1 maximum is 5 and 
+      @dev we need to make sure such amount exists in our contract. Also he can withdraw only per 1 hour
+         
+    function withdrawEther(uint256 etherToWithdraw) 
+        public 
+        payable
+        onlyIfOwner
+        onlyIfOneHourPast {
+            require(etherToWithdraw  0  etherToWithdraw = 5, 'You cannot withdraw less than 1');
+            require(etherToWithdraw = totalAmount, 'You cannot withdraw more than existing ethers');
+            
+            timeToNextWithdraw = now;
+            totalAmount -= etherToWithdraw;
+        
+            msg.sender.transfer(etherToWithdraw);
+            emit Withdraw(msg.sender, etherToWithdraw, totalAmount);
+        }
+}

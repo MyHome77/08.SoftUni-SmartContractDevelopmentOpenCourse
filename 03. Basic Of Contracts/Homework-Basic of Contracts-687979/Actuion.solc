@@ -1,0 +1,189 @@
+pragma solidity ^0.5.1;
+
+/**
+ *@title Actuion where users can bid, only highest bid will remain up,
+ * there could be two states of actuion canceled or finished. If is canceled
+ * bidder can withdraw his ammount of money. If is finished bidder receive item
+ * By: A.M.
+ */
+contract Actuion {
+    /**----------------------
+     * State
+     -----------------------*/
+    
+    address public owner;
+    uint256 public startTime;
+    uint256 public endTime;
+    uint256 public currentlyHighestBid;
+    address public highestBidder;
+    mapping(address => uint256) public bidders;
+    bool public isCanceled;
+    uint256 public bidIncreaseBy;
+    mapping(address => uint256) public bidsByTime;
+    
+    /**----------------------
+     * Events
+     -----------------------*/
+    
+    event NewHighestBid(address bidder, uint256 value);
+    event ActuionWasCanceled();
+    event ActuionFinishedSuccessfully(address winner, uint256 ammount, string actuionState);
+    
+    /**----------------------
+     * Modifiers
+     -----------------------*/
+    
+    modifier onlyIfOwner {
+        require(msg.sender == owner, 'Only owner can check for highest bid and bidder address');
+        _;
+    }
+    
+    modifier onlyIfNotOwner {
+        require(msg.sender != owner, 'Only not contractor creator can bid');
+        _;
+    }
+    
+    modifier onlyIfEtherIsHighThanZero {
+        require (msg.value > 0 ether, 'Ether must be more than 0');
+        _;
+    }
+    
+    modifier onlyIfBidIsStarted {
+        require(now > startTime, 'Bid is not currently open');
+        _;
+    }
+    
+    modifier onlyIfBidIsNotEnded {
+        require (now < endTime, 'Bid is closed');
+        _;
+    }
+    
+    modifier onlyIfNotCanceled {
+        require(isCanceled == false, 'Actuion is canceled');
+        _;
+    }
+    
+    modifier onlyIfIsCanceledOrIsOver {
+        require (isCanceled == true || endTime < now, 'Actuion is over');
+        _;
+    }
+    
+    /**----------------------
+     * Initial setup
+     -----------------------*/
+    
+    constructor(uint256 _startTime, uint256 _endTime, uint256 _bidIncreaseBy) public {
+        owner = msg.sender;
+        require(_startTime < _endTime, 'Start time must be less than end time');
+        startTime = now + _startTime;
+        endTime = now + _endTime;
+        bidIncreaseBy = _bidIncreaseBy;
+    }
+    
+    /**----------------------
+     * Functions
+     -----------------------*/
+    
+    /**
+     * @dev Function place a bid. Allows users to place their bid. Only highest bid will remain.
+     * @dev Valid state to invoke function:
+     * @dev     - Cannot be called by owner of the contract 
+     * @dev     - Cannot be called if provided ether is less than 1 ether
+     * @dev     - Cannot be called if actiuon is not open
+     * @dev     - Cannot be called if actiuon is closed
+     * @dev     - Cannot be called if actiuon is canceled
+     * @dev First pick totalAmmount of for current sender. Then check if it's higher than current higher bidder
+     * @dev Make sure bidder dont have any bids for past one hour, if so throw error
+     * @dev It will update new higher bid and it will save the address of the sender. If it's not higher it
+     * @dev will throw a error and revert amount of ethers + remaining gas.
+     */
+    function placeABid()
+        public
+        payable
+        onlyIfNotOwner
+        onlyIfEtherIsHighThanZero
+        onlyIfBidIsStarted
+        onlyIfBidIsNotEnded
+        onlyIfNotCanceled {
+            uint256 newBid;
+            newBid = bidders[msg.sender] + msg.value;
+            currentlyHighestBid = bidders[highestBidder];
+            
+            require(newBid > currentlyHighestBid + bidIncreaseBy, 'You need to bid more');
+            require(bidsByTime[msg.sender] + 1 hours < now || bidders[msg.sender] == 0, 'You are not allowed to bid in next 1 hour');
+            
+            bidsByTime[msg.sender] = now;
+            highestBidder = msg.sender;
+            bidders[msg.sender] = newBid;
+            currentlyHighestBid = newBid;
+            emit NewHighestBid(highestBidder, newBid);
+        }
+        
+        
+    /**
+     * @dev Withdraw will determine if the time of actiuon is passed or actiuon has been canceled. 
+     * @dev Valid state to invoke the function:
+     * @dev     - Only if actiuon is canceled or it's closed
+     * @dev If it's canceled then bidder with the highest bid can withdraw his ammount of bid.
+     * @dev If it's over owner of the contract can reset state of the winner and collect ammount of highest bid.
+     * @dev Finally we check if is over and correct user invoke the function 
+     * @dev then we emit event with current state of the actiuon.
+     */
+    function withdrawFunds()
+        public
+        payable
+        onlyIfIsCanceledOrIsOver {
+            uint256 withdrawAmount;
+            string memory actuionState;
+            bool isOver;
+            
+            if(isCanceled == true && msg.sender == highestBidder) {
+                actuionState = "Canceled";
+                isOver = true;
+                withdrawAmount = resetWithdrawerState(msg.sender);
+                msg.sender.transfer(withdrawAmount);    
+            } else if(endTime < now && msg.sender == owner) {
+                actuionState = "Finished";
+                isOver = true;
+                withdrawAmount = resetWithdrawerState(highestBidder);
+                msg.sender.transfer(withdrawAmount);
+            }
+            
+            // In case actuion is canceled but owner try to withdraw should throw.
+            // In case actuion is finished but bidder try to withdraw should throw.
+            require(isOver, 'Something went wrong...');
+            emit ActuionFinishedSuccessfully(highestBidder, currentlyHighestBid, actuionState);
+        }    
+    
+    // @dev Can be called only by the owner and check which is the currently highest bidder and highest bid.
+    function checkHighestBidder() 
+        public 
+        onlyIfOwner 
+        view 
+        returns(address, uint256) {
+            return (highestBidder, currentlyHighestBid);
+        }
+    
+    // @dev Can be called only by the owner and it will close the actiuon by canceled it.
+    function cancelActuion() 
+        public
+        onlyIfOwner {
+            isCanceled = true;
+            emit ActuionWasCanceled();
+        }
+    
+    /**
+     * @dev Pick ammount to withdraw, make sure is higher than 0, remove amount from bidder totalAmmount,
+     * @dev make sure bidder totalAmmount is decreased, return ammount to withdraw
+     */
+    function resetWithdrawerState(address who)
+        private
+        returns(uint256) {
+            uint256 withdrawAmount;
+            withdrawAmount = bidders[who];
+            require(withdrawAmount > 0, 'Not valid amount to withdraw');
+            bidders[highestBidder] -= withdrawAmount;
+            require(bidders[who] == 0, 'Recipient must have 0 value');
+            return withdrawAmount;
+        }
+}

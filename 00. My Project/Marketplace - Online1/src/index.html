@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+  <title>Marketplace - Smart Contracts 2019</title>
+
+  <!-- Bootstrap -->
+  <link href="css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+  <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+  <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+  <div class="container">
+    <div id="register">
+      <form>
+          <div class="container">
+              <h1>Register</h1>
+              <p>Please fill in this form to create an account.</p>
+              <hr>
+
+              <p>Username</p>
+              <input type="text" placeholder="Enter Username" name="username" id="username" required>
+              <hr>
+              <p>Role</p>
+              <input type="radio" name="role" value="Administrator"> Administrator
+              <input type="radio" name="role" value="Store Owner"> Store Owner
+              <input type="radio" name="role" value="Buyer"> Buyer
+              <button type="submit" class="registerbtn">Register</button>
+          </div>
+          <div class="registerResult"></div>
+      </form>
+    </div>
+    <div id="login">
+          <div class="container">
+              <h1>Login</h1>
+              <hr>
+              <button type="submit" class="loginbtn">Login</button>
+              <div id=loginResult></div>
+          </div>
+    </div>
+    <div id="createStore">
+      <form>
+          <div class="container">
+              <h1>Create Store</h1>
+              <p>Please fill in this form to create a store.</p>
+              <hr>
+
+              <p>Store Name</p>
+              <input type="text" placeholder="Enter Store Name" name="storeName" id="storeName" required>
+              <hr>
+              <button type="submit" class="createStorebtn">Create Store</button>
+              <div id="createStoreResult"></div>
+          </div>
+      </form>
+    </div>
+    <hr>
+    <div id="getStores">
+          <div class="container">
+              <h1>Stores</h1>
+              <button type="submit" class="getStoresbtn">Get Stores</button>
+              <hr>
+              <div id="getStoresResult"></div>
+          </div>
+    </div>
+    <hr>
+    <div id="getProducts">
+          <div class="container">
+              <h1 id="getProductsTitle">Products</h1>
+              <hr>
+              <table id="allProducts">
+                <th>Product Id</th>
+                <th>Product Name</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <tr>
+                  <td id="productId"></td>
+                  <td id="productName"></td>
+                  <td id="productPrice">
+                    <input type="number">
+                    <button type="submit" class="savePricebtn">Save Price</button>
+                  </td>
+                  <td id="productQuantity">
+                    <input type="number">
+                    <button type="submit" class="saveQuantitybtn">Save Quantity</button>
+                  </td>
+                  <td id="deleteProduct">
+                      <button type="submit" class="deleteProductbtn">Delete Product</button>
+                    </td>
+                </tr>
+              </table>
+              <hr>
+              <form id="addProduct">
+                  <input type="text" placeholder="Enter Store Name" id="storeName">
+                  <input type="text" placeholder="Enter Product Name" id="productTitle">
+                  <input type="number" placeholder="Enter Price" id="productPrice">
+                  <input type="number" placeholder="Enter Quantity" id="productQuantity">
+                  <button type="submit" class="addProductbtn">Add Product</button>
+              </form>
+              <div id=addProductResult></div>
+          </div>
+    </div>
+  </div>
+  <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+  <!-- Include all compiled plugins (below), or include individual files as needed -->
+  <script src="js/bootstrap.min.js"></script>
+  <script src="js/web3.min.js"></script>
+  <script src="js/truffle-contract.js"></script>
+  <script src="js/app.js"></script>
+</body>
+
+</html>
